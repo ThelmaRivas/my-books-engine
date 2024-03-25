@@ -1,39 +1,62 @@
-const jwt = require('jsonwebtoken');
+// Update the auth middleware function to work with the GraphQL API
+require("dotenv").config;
+const jwt = require("jsonwebtoken");
+const { GraphQLError } = require("graphql");
+const path = require("path");
 
-// set token secret and expiration date
-const secret = 'mysecretsshhhhh';
-const expiration = '2h';
+// Set expiration date
+const expiration = "2h";
+// Set secret key
+const secret = "supersecret";
 
 module.exports = {
-  // function for our authenticated routes
-  authMiddleware: function (req, res, next) {
-    // allows token to be sent via  req.query or headers
-    let token = req.query.token || req.headers.authorization;
+  // Error Handling
+  AuthenticationError: new GraphQLError(
+    "Authentication token is invalid, please log in again",
+    {
+      extensions: {
+        code: "UNAUTHENTICATED",
+      },
+    }
+  ),
 
-    // ["Bearer", "<tokenvalue>"]
-    if (req.headers.authorization) {
-      token = token.split(' ').pop().trim();
+  // Auth Middleware function
+  authMiddleware: function ({ req }) {
+    console.log(`Verifying token for ${req.method} ${req.path}`);
+    console.log("req.body.token:", req.body.token);
+    console.log("req.query.token:", req.query.token);
+    console.log("req.headers.authorization:", req.headers.authorization);
+
+    // allows token to be sent via req.body, req.query, or headers
+    let token = req.body.token || req.query.token || req.headers.authorization;
+    const authHeader = req.headers.authorization;
+
+    if (authHeader) {
+      console.log("Token is in headers");
+      token = token.split(" ").pop().trim();
     }
 
     if (!token) {
-      return res.status(400).json({ message: 'You have no token!' });
+      console.log("No token provided");
+      return req;
     }
 
     // verify token and get user data out of it
     try {
+      console.log("Token is:", token);
       const { data } = jwt.verify(token, secret, { maxAge: expiration });
       req.user = data;
-    } catch {
-      console.log('Invalid token');
-      return res.status(400).json({ message: 'invalid token!' });
+      console.log("Token verified, user is", req.user);
+    } catch (err) {
+      console.log("Invalid token", err);
+      return req;
     }
 
-    // send to next endpoint
-    next();
+    return req;
   },
-  signToken: function ({ username, email, _id }) {
-    const payload = { username, email, _id };
 
+  signToken: function ({ email, username, _id }) {
+    const payload = { email, username, _id };
     return jwt.sign({ data: payload }, secret, { expiresIn: expiration });
   },
 };
