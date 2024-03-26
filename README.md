@@ -44,6 +44,8 @@ To begin working with the Book Search Engine, follow these steps:
 
 5. Explore the search engine, login/signup functionality, and saving/removing books features.
 
+Here is a screenshot of the application when running `npm run develop`: ![Landing Page](./assets/LandingPage.png)
+and the link to the deployed app on Heroku: [my-books-engine.herokuapp.com](https://my-books-engine-222f03430794.herokuapp.com/)
 
 ## License
 
